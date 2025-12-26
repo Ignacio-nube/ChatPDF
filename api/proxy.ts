@@ -13,11 +13,29 @@ export default async function handler(req: Request) {
   }
 
   const url = new URL(req.url);
-  const path = url.pathname.replace('/api/v1', '');
-  const targetUrl = `https://api.openai.com/v1${path}`;
+  // Buscamos la parte de la ruta que sigue a /api/v1
+  const pathMatch = url.pathname.match(/\/api\/v1\/(.*)/);
+  const path = pathMatch ? pathMatch[1] : '';
+  
+  if (!path) {
+    // Si no hay match por regex, intentamos por búsqueda simple
+    const index = url.pathname.indexOf('/api/v1/');
+    if (index !== -1) {
+      const extractedPath = url.pathname.substring(index + 8);
+      if (extractedPath) {
+        return await proxyRequest(req, extractedPath);
+      }
+    }
+    return new Response(JSON.stringify({ error: 'Ruta no válida', pathname: url.pathname }), { status: 400 });
+  }
+
+  return await proxyRequest(req, path);
+}
+
+async function proxyRequest(req: Request, path: string) {
+  const targetUrl = `https://api.openai.com/v1/${path}`;
 
   const headers = new Headers();
-  // Copiamos solo los headers necesarios para evitar conflictos
   const headersToCopy = ['content-type', 'accept', 'user-agent'];
   headersToCopy.forEach(h => {
     const val = req.headers.get(h);
@@ -38,7 +56,6 @@ export default async function handler(req: Request) {
 
     const response = await fetch(targetUrl, fetchOptions);
 
-    // Si OpenAI devuelve un error, intentamos capturarlo para el log
     if (!response.ok) {
       const errorData = await response.text();
       console.error(`OpenAI Error (${response.status}):`, errorData);
