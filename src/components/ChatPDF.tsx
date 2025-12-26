@@ -126,7 +126,8 @@ const ChatPDF = () => {
       const embeddings = new OpenAIEmbeddings({
         apiKey: 'proxy',
         configuration: {
-          baseURL: window.location.origin + '/api/v1',
+          baseURL: `${window.location.origin}/api/v1`.replace(/([^:]\/)\/+/g, "$1"),
+          dangerouslyAllowBrowser: true
         }
       });
 
@@ -194,11 +195,12 @@ const ChatPDF = () => {
 
       // 4. Configurar el modelo de lenguaje (LLM)
       const llm = new ChatOpenAI({
-        modelName: "gpt-3.5-turbo",
-        temperature: 0.3, // Aumentamos un poco la temperatura para mayor naturalidad
+        modelName: "gpt-4o-mini",
+        temperature: 0.3,
         apiKey: 'proxy',
         configuration: {
-          baseURL: window.location.origin + '/api/v1',
+          baseURL: `${window.location.origin}/api/v1`.replace(/([^:]\/)\/+/g, "$1"),
+          dangerouslyAllowBrowser: true
         }
       });
 
@@ -250,9 +252,19 @@ const ChatPDF = () => {
       });
 
       setHistory(prev => [...prev, { role: 'assistant', text: response.answer }]);
-    } catch (err) {
+    } catch (err: any) {
       console.error("Error al generar respuesta:", err);
-      setError('Hubo un problema al conectar con OpenAI. Verifica tu API Key.');
+      
+      // Intentar extraer un mensaje de error más descriptivo
+      let errorMessage = 'Hubo un problema al conectar con OpenAI.';
+      if (err.message) {
+        if (err.message.includes('401')) errorMessage += ' (Error 401: API Key inválida o no configurada)';
+        else if (err.message.includes('429')) errorMessage += ' (Error 429: Límite de cuota excedido)';
+        else if (err.message.includes('500')) errorMessage += ' (Error 500: Error interno del servidor proxy)';
+        else errorMessage += ` Detalle: ${err.message}`;
+      }
+      
+      setError(errorMessage);
     } finally {
       setIsProcessing(false);
     }
