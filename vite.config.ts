@@ -14,7 +14,7 @@ export default defineConfig(({ mode }) => {
           changeOrigin: true,
           rewrite: (path) => path.replace(/^\/api\/v1/, ''),
           configure: (proxy, _options) => {
-            proxy.on('proxyReq', (proxyReq, req, _res) => {
+            proxy.on('proxyReq', (proxyReq, _req, _res) => {
               const key = env.OPENAI_API_KEY || env.VITE_OPENAI_API_KEY;
               if (key) {
                 proxyReq.setHeader('Authorization', `Bearer ${key}`);
