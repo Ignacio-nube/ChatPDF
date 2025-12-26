@@ -126,7 +126,7 @@ const ChatPDF = () => {
       const embeddings = new OpenAIEmbeddings({
         apiKey: 'proxy',
         configuration: {
-          baseURL: `${window.location.origin}/api/v1`.replace(/([^:]\/)\/+/g, "$1"),
+          baseURL: window.location.origin + '/api/v1',
           dangerouslyAllowBrowser: true
         }
       });
@@ -199,7 +199,7 @@ const ChatPDF = () => {
         temperature: 0.3,
         apiKey: 'proxy',
         configuration: {
-          baseURL: `${window.location.origin}/api/v1`.replace(/([^:]\/)\/+/g, "$1"),
+          baseURL: window.location.origin + '/api/v1',
           dangerouslyAllowBrowser: true
         }
       });
